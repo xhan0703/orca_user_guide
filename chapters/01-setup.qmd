@@ -1,0 +1,176 @@
+---
+title: "Setup"
+---
+
+## Overview
+
+ORCA is TransLink's integrated regional activity-based modeling workflow. It bundles five components:
+
+- **PopulationSim** -- synthetic population generation
+- **ActivitySim** -- residential travel demand model
+- **CVM** -- commercial vehicle model
+- **Quetzal** -- open-source traffic and transit assignment
+- **tlpytools (ORCA runner)** -- Python orchestration layer
+
+This notebook walks through a first-time setup on a Windows machine. By the end you will have all five Python environments installed locally and be ready to run an example scenario.
+
+## Prerequisites
+
+Before you start, confirm the following:
+
+| Requirement | Notes |
+|---|---|
+| **OS** | Windows 10/11, AMD64 architecture |
+| **Git** | Installed and available on `PATH` -- check with `git --version` |
+| **Disk space** | ~10 GB free for the five Python environments |
+| **Network** | Access to GitHub and PyPI |
+
+::: {.callout-tip}
+The installer is fully scripted -- you do **not** need a pre-existing Python install. Each component gets its own isolated environment under `.py_envs\`.
+:::
+
+::: {.callout-warning}
+If you have Conda active in your shell, the setup script will deactivate it automatically to avoid conflicts. Start from a clean Command Prompt where possible.
+:::
+
+## Step 1 -- Clone the repository
+
+Open a Command Prompt and clone the ORCA repo to your working directory:
+
+```bat
+git clone https://github.com/TransLinkForecasting/orca.git
+cd orca
+```
+
+## Step 2 -- Run the setup script
+
+From the repo root, run:
+
+```bat
+run_python_cmds.bat
+```
+
+On the **first run**, the script detects that no environments exist and prompts you to install them. Type `Y` to proceed. The installer will:
+
+1. Verify Windows AMD64.
+2. Install the base `tlpytools` environment (`.py_envs\tlpytools`).
+3. Install `uv` (a fast Python package manager) into `.py_envs\.uv`.
+4. Clone the **ActivitySim**, **PopulationSim**, and **Quetzal** source repos into `.py_envs\`.
+5. Stage the **CVM** source code into `.py_envs\cvm`.
+6. Build the five Python environments with the versions below.
+7. Install any optional `requirements.prod.txt` packages found in the repo.
+
+### Python versions used
+
+| Environment | Python version | Manager |
+|---|---|---|
+| `tlpytools` | 3.10 | uv |
+| `activitysim` | 3.10 | uv |
+| `populationsim` | 3.10 | uv |
+| `cvm` | 3.12 | uv |
+| `quetzal` | 3.12+ | Poetry |
+
+The first run may take 10--20 minutes depending on network speed.
+
+## Step 3 -- Select an environment
+
+On subsequent runs of `run_python_cmds.bat`, the script lists the installed environments and asks you to pick one (the default is `tlpytools`):
+
+```text
+Available environments:
+  1. tlpytools     (default)
+  2. activitysim
+  3. populationsim
+  4. cvm
+  5. quetzal
+
+Enter environment name or number:
+```
+
+The selected environment is activated in a persistent Command Prompt. The script also sets these environment variables so the ORCA runner can resolve each component's Python interpreter:
+
+```text
+ORCA_BASE_ENV         -> .py_envs\tlpytools\.venv\Scripts\python.exe
+ORCA_CVM_ENV          -> .py_envs\cvm\.venv\Scripts\python.exe
+ORCA_ACTIVITYSIM_ENV  -> .py_envs\activitysim\.venv\Scripts\python.exe
+ORCA_POPULATIONSIM_ENV -> .py_envs\populationsim\.venv\Scripts\python.exe
+ORCA_QUETZAL_ENV      -> .py_envs\quetzal\.venv\Scripts\python.exe
+TLPT_ADLS_CACHE_DIR   -> .py_envs\.adls_cache
+```
+
+### `.env` for Azure / cloud operations
+
+When `tlpytools` is selected, the script looks for a `.env` file in the repo root:
+
+- If `.env` is missing and `.py_envs\tlpytools\.env.example` exists, the script copies the example to `.env` and reminds you to fill in your values **before** running any Azure Cloud commands.
+- If the example is missing, you'll need to create `.env` manually.
+
+You can skip this if you're only running locally.
+
+## Step 4 -- Verify the install
+
+With `tlpytools` activated, confirm the runner is importable:
+
+```bat
+python -c "import tlpytools.orca; print('ORCA runner OK')"
+```
+
+Expected output:
+
+```text
+ORCA runner OK
+```
+
+If you see an `ImportError`, re-run `run_python_cmds.bat` and check the install log for which environment failed.
+
+## Step 5 -- Run a smoke-test scenario
+
+The repo ships with an example scenario named `db_example`. From the activated `tlpytools` shell:
+
+```bat
+python -m tlpytools.orca --action init_model --scenario db_example
+python -m tlpytools.orca --action run_model  --scenario db_example
+```
+
+- `init_model` builds the scenario folder from the default template (`src/orca/orca_model_config_default.yaml`) and the `initialize_scenario` block.
+- `run_model` executes the components defined in `db_example/orca_model_config.yaml`.
+
+::: {.callout-note}
+To tweak which steps or components run, edit `db_example/orca_model_config.yaml` after `init_model` -- not the default template -- then re-run `run_model`.
+:::
+
+## Optional -- Jupyter setup
+
+If you'd rather drive ORCA interactively from notebooks:
+
+```bat
+start_jupyter.bat
+```
+
+This script:
+
+1. Registers all five environments as Jupyter kernels.
+2. Converts cell-magic Python scripts in `src/orca/` to notebooks under `tools/`.
+3. Launches the Jupyter server at <http://localhost:8888>.
+
+Notebooks you'll find under `tools/`:
+
+- `orca_model_runner.ipynb` -- step-through local model runs
+- `orca_cloud_runner.ipynb` -- ADLS upload/download and Azure Batch submission
+- `abm_high_level_summary_general.ipynb` -- results analysis
+
+## Where to go next
+
+- **Configuration deep-dive** -- `src/orca/README.md` documents every key in `orca_model_config.yaml`.
+- **Per-component setup** -- if you need to install or debug ActivitySim, PopulationSim, CVM, or Quetzal on their own, see their respective READMEs under `src/<component>/`.
+- **Cloud runs** -- `tools/orca_cloud_runner.ipynb` covers Azure Data Lake Storage uploads and Azure Batch submission for large-scale runs.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `git: command not found` | Git not on PATH | Install Git for Windows, reopen Command Prompt |
+| Install hangs at "Cloning ActivitySim" | Network/GitHub access blocked | Check VPN / proxy / firewall |
+| `Platform not supported` | Running on ARM or non-Windows | Use a Windows AMD64 host |
+| `ImportError: tlpytools` after activation | tlpytools env failed to build | Delete `.py_envs\tlpytools\` and re-run `run_python_cmds.bat` |
+| Conda keeps reactivating | Conda auto-activate in shell profile | Disable `auto_activate_base` in `.condarc` or start from a fresh `cmd.exe` |

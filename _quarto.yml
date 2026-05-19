@@ -1,0 +1,33 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "ORCA User Guide"
+  subtitle: "Installing and running TransLink's regional activity-based modeling workflow"
+  author: "TransLink Forecasting"
+  date: today
+  search: true
+  # Uncomment and set once the GitHub remote exists. Enables the
+  # "Edit this page" / "Report an issue" links in the page margin:
+  # repo-url: https://github.com/TransLinkForecasting/orca-user-guide
+  # repo-branch: main
+  # repo-actions: [edit, issue]
+  chapters:
+    - index.qmd
+    - chapters/01-setup.qmd
+    - chapters/02-run-model.qmd
+  sidebar:
+    style: docked
+  page-footer:
+    left: "© TransLink Forecasting"
+    right: "Built with [Quarto](https://quarto.org)"
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-overflow: wrap
+    number-sections: true

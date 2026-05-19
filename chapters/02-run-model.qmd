@@ -1,0 +1,228 @@
+---
+title: "Running the Model"
+---
+
+## Overview
+
+This notebook picks up where [`01-setup.qmd`](01-setup.qmd) left off. After setup you have five Python environments under `.py_envs\` and the `tlpytools` runner available. Here we'll:
+
+1. Initialize a scenario from the default template
+2. Run the model locally
+3. Look at where outputs and logs land
+4. Tune which steps run via `orca_model_config.yaml`
+
+All commands are run from the **repo root** with the `tlpytools` environment activated.
+
+## Prerequisites
+
+::: {.callout-note}
+Before continuing, confirm:
+
+- `run_python_cmds.bat` completed successfully and selected `tlpytools`
+- `python -c "import tlpytools.orca"` returns no errors
+- You're sitting in the cloned `orca\` directory
+:::
+
+## Quick start
+
+The whole local workflow is two commands:
+
+```bat
+python -m tlpytools.orca --action init_model --scenario db_example
+python -m tlpytools.orca --action run_model  --scenario db_example
+```
+
+- **`init_model`** -- builds a scenario folder named `db_example/` from the default template at `src/orca/orca_model_config_default.yaml`. It copies in input data and per-component source templates, then strips the `initialize_scenario` block from the resulting config.
+- **`run_model`** -- iterates through the `model_steps` defined in `db_example/orca_model_config.yaml`, calling each sub-component in its own Python environment.
+
+::: {.callout-warning}
+`init_model` will **fail** if `db_example/` already exists. Either delete the folder or pick a new scenario name.
+:::
+
+## What gets created
+
+After `init_model`, your scenario folder looks roughly like this:
+
+```text
+db_example/
+├── inputs/                      # shared landuse, networks, shapefiles, trucks
+├── outputs/                     # populated as the model runs
+├── logs/                        # orca_<timestamp>.log + CSV operation logs
+├── popsim/                      # PopulationSim configs + data
+├── activitysim/                 # ActivitySim configs + data
+├── cvm/                         # Commercial Vehicle Model
+├── quetzal/                     # Quetzal assignment model
+├── orca_model_config.yaml       # scenario-specific runtime config
+└── orca_model_state.json        # execution state (managed by ORCA)
+```
+
+`orca_model_state.json` tracks current iteration, step index, and identity (project + scenario name). **Don't edit it by hand** -- ORCA uses it for state-based cloud sync.
+
+## Reading the scenario config
+
+Open `db_example/orca_model_config.yaml`. The two top sections you'll touch most often:
+
+```yaml
+iterations:
+  total: 4        # number of feedback loops between demand & assignment
+  start_at: 1
+
+model_steps:
+  - quetzal_starter
+  - activitysim
+  - cvm
+  - quetzal
+```
+
+- **`iterations.total`** -- how many full passes the model makes
+- **`model_steps`** -- the ordered list of sub-components to run each iteration
+
+Below that, `sub_components:` defines per-component behavior (Python env, commands, cleanup, output archives). The most useful key per component is `iterations`:
+
+| Value | Meaning |
+|---|---|
+| `all` | Run every iteration |
+| `first` | Only iteration 1 |
+| `last` | Only the final iteration |
+| `[1, 3, 4]` | Specific iterations (integers, or mix with `"first"`/`"last"`) |
+
+::: {.callout-tip}
+`quetzal_starter` is typically set to `first` (it just builds initial skims), while `activitysim`, `cvm`, and `quetzal` run on `all` iterations.
+:::
+
+## Run it
+
+With `tlpytools` activated:
+
+```bat
+python -m tlpytools.orca --action run_model --scenario db_example --mode local_testing
+```
+
+What to expect:
+
+- ORCA reads `orca_model_config.yaml`
+- For each iteration, it walks `model_steps` and shells out to each sub-component's Python env (resolved from `ORCA_<COMP>_ENV` environment variables set by `run_python_cmds.bat`)
+- Progress lines appear in the console at `INFO` level (about one per major step)
+- Detailed logs stream to `db_example/logs/orca_<timestamp>.log`
+
+For a longer first run, redirect to a file if you want to keep the console clean:
+
+```bat
+python -m tlpytools.orca --action run_model --scenario db_example > run.log 2>&1
+```
+
+### Verbose / debug logging
+
+To see every internal operation, set the log level in `orca_model_config.yaml`:
+
+```yaml
+logging:
+  level: DEBUG    # DEBUG | INFO | WARNING | ERROR | CRITICAL
+```
+
+Or pass `--verbose` on the command line.
+
+## Inspecting outputs
+
+After the run completes, look in:
+
+| Path | What's there |
+|---|---|
+| `db_example/outputs/` | Top-level model outputs (skims, summaries) |
+| `db_example/<component>/output/` | Per-component outputs (e.g. `activitysim/output/`) |
+| `db_example/logs/orca_*.log` | Orchestrator log -- timing, errors, step boundaries |
+| `db_example/logs/*_log_*.csv` | File operation logs (copy/download/upload) |
+| `db_example/orca_model_state.json` | Final state (iteration counter, status) |
+
+The bundled `tools/abm_high_level_summary_general.ipynb` notebook reads model outputs and produces summary tables -- a good first stop for verifying a run "looks right."
+
+## Tuning a run
+
+A few common edits to `db_example/orca_model_config.yaml`:
+
+### Run only one component
+
+Strip `model_steps` to just the component you're debugging:
+
+```yaml
+model_steps:
+  - activitysim
+```
+
+### Change iteration count
+
+```yaml
+iterations:
+  total: 1     # single pass -- useful for smoke testing
+```
+
+### Switch ActivitySim to a small test config
+
+In `sub_components.activitysim.commands`, swap the production command for the cropped test config (already commented in the default template):
+
+```yaml
+- command: "{python} simulation.py -c test/configs -c configs_2023 -c configs -d test/data -o output --sys-monitor"
+  description: "Run ActivitySim model for debugging"
+```
+
+::: {.callout-warning}
+Edit the **scenario** config (`db_example/orca_model_config.yaml`), not the **template** (`src/orca/orca_model_config_default.yaml`). The template only applies the next time you `init_model` a fresh scenario.
+:::
+
+## Running individual ORCA actions
+
+`tlpytools.orca` exposes a few actions beyond `run_model`:
+
+| Action | What it does |
+|---|---|
+| `init_model` | Create the scenario folder from the template |
+| `run_model` | Execute `model_steps` for all iterations |
+| `unpack_landuse` | Extract landuse files filtered by model year (normally run automatically) |
+| `adls_sync` | Upload/download a scenario to/from Azure Data Lake Storage |
+
+CLI shape:
+
+```bat
+python -m tlpytools.orca --action <action> --scenario <name> [--mode local_testing|cloud_production] [--project <name>] [--verbose]
+```
+
+Get full help:
+
+```bat
+python -m tlpytools.orca --help
+```
+
+## Optional -- run from a notebook
+
+If you prefer the cell-by-cell experience, the repo ships with `tools/orca_model_runner.ipynb`. Launch Jupyter from the repo root:
+
+```bat
+start_jupyter.bat
+```
+
+…then open `tools/orca_model_runner.ipynb` in the browser. It registers all five environments as kernels and walks through `init_model` / `run_model` with the same arguments as the CLI.
+
+## Cloud runs (preview)
+
+Once a scenario runs cleanly locally, you can push it to Azure Data Lake Storage and trigger a cloud run via Azure Batch:
+
+```bat
+python -m tlpytools.orca --action adls_sync --scenario db_example --project proj_test --sync-action upload
+python -m tlpytools.orca.batch_task_runner --job-id job_medium --project proj_test --scenario db_example --docker-image orca/orca:develop --max-wall-clock-time PT6H --timeout-minutes 360
+python -m tlpytools.orca --action adls_sync --scenario db_example --project proj_test --sync-action download
+```
+
+That workflow has its own setup (Azure credentials, project naming, VM sizing). A dedicated cloud-runs notebook will cover it.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `init_model` errors: "scenario already exists" | Old `db_example/` left over | Delete the folder, or use a different `--scenario` name |
+| `ImportError: tlpytools` | Wrong environment activated | Re-run `run_python_cmds.bat`, pick `tlpytools` |
+| Component fails: `python.exe not found` | `ORCA_<COMP>_ENV` not set | Activate via `run_python_cmds.bat` so the env vars are exported |
+| Run hangs at `activitysim` step | Production config on a small machine | Edit `sub_components.activitysim.commands` to use the test config |
+| `Upload not allowed - remote is ahead` | Cloud copy is further along than local | Download from cloud first, then resume locally |
+| Logs missing from console | Log level set too high | Set `logging.level: INFO` (or pass `--verbose`) |
+
+For per-component issues (e.g., ActivitySim model-spec errors, Quetzal network problems), the component's own log under `db_example/<component>/` is usually more informative than the orchestrator log.

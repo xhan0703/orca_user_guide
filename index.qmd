@@ -1,0 +1,27 @@
+# Welcome {.unnumbered}
+
+This guide walks you through installing and running **ORCA**, TransLink's
+integrated regional activity-based modeling workflow. ORCA bundles five
+components into a single orchestrated pipeline:
+
+- **PopulationSim** — synthetic population generation
+- **ActivitySim** — residential travel demand model
+- **CVM** — commercial vehicle model
+- **Quetzal** — open-source traffic and transit assignment
+- **tlpytools (ORCA runner)** — Python orchestration layer
+
+## How this guide is organized
+
+| Chapter | What it covers |
+|---|---|
+| **1 · Setup** | First-time installation on a Windows machine — clone the repo, build the five Python environments, run a smoke-test scenario. |
+| **2 · Running the Model** | Initialize a scenario, run it locally, find the outputs and logs, and tune which steps run via `orca_model_config.yaml`. |
+
+Start with **Setup** if this is a fresh machine; jump straight to
+**Running the Model** if your environments are already built.
+
+::: {.callout-note}
+This is a living document. Each chapter renders from the matching `.qmd`
+source under `chapters/` — see the project `README.md` for how to preview
+the guide locally or contribute a new chapter.
+:::

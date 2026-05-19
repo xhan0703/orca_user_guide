@@ -1,0 +1,12 @@
+# Normalize line endings: text is LF in the repo, checked out native.
+# Keeps Windows-authored sources consistent with the Ubuntu CI build.
+* text=auto eol=lf
+
+*.qmd   text
+*.yml   text
+*.md    text
+
+*.png   binary
+*.jpg   binary
+*.gif   binary
+*.svg   text
