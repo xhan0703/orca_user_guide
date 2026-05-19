@@ -17,6 +17,9 @@ book:
     - index.qmd
     - chapters/01-setup.qmd
     - chapters/02-run-model.qmd
+  appendices:
+    - guides/populationsim.qmd
+    - guides/quetzal.qmd
   sidebar:
     style: docked
   page-footer:

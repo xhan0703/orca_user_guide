@@ -20,6 +20,12 @@ components into a single orchestrated pipeline:
 Start with **Setup** if this is a fresh machine; jump straight to
 **Running the Model** if your environments are already built.
 
+The **appendices** are component-specific helper guides — reference material
+you dip into as needed, not part of the linear walkthrough:
+
+- **Appendix A · PopulationSim** — synthetic population generation
+- **Appendix B · Quetzal** — traffic and transit assignment
+
 ::: {.callout-note}
 This is a living document. Each chapter renders from the matching `.qmd`
 source under `chapters/` — see the project `README.md` for how to preview

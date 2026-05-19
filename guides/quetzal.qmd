@@ -1,0 +1,73 @@
+---
+title: "Quetzal"
+---
+
+::: {.callout-note appearance="simple"}
+A **helper guide** — reference material for working with the Quetzal
+component, not part of the linear Setup → Run walkthrough. Dip in as needed.
+:::
+
+## Overview
+
+**Quetzal** is the open-source traffic and transit assignment model in ORCA.
+It produces the network skims that the demand models feed back on, and runs
+in its own isolated Python environment.
+
+## Where it fits in ORCA
+
+| Aspect | Value |
+|---|---|
+| Python environment | `quetzal` — Python 3.12+, managed by Poetry (`.py_envs\quetzal`) |
+| Scenario folder | `<scenario>/quetzal/` — configs + network data |
+| Config block | `sub_components.quetzal` in `<scenario>/orca_model_config.yaml` |
+
+Quetzal appears in `model_steps` as **two** entries with different roles:
+
+| Step | Typical `iterations:` | Purpose |
+|---|---|---|
+| `quetzal_starter` | `first` | Builds the initial skims before the first demand pass |
+| `quetzal` | `all` | Full assignment, run every feedback iteration |
+
+See [Running the Model](../chapters/02-run-model.qmd) for the shared
+`all` / `first` / `last` / `[1,3]` iteration semantics.
+
+## Running just Quetzal
+
+To debug assignment without a full demand run, trim `model_steps` in
+`<scenario>/orca_model_config.yaml` to the Quetzal step(s):
+
+```yaml
+model_steps:
+  - quetzal_starter
+  - quetzal
+```
+
+Then run as usual:
+
+```bat
+python -m tlpytools.orca --action run_model --scenario db_example --mode local_testing
+```
+
+::: {.callout-warning}
+Edit the **scenario** config, never the template
+(`src/orca/orca_model_config_default.yaml`).
+:::
+
+## Inputs and outputs
+
+- **Inputs**: network and transit data under `<scenario>/quetzal/`.
+- **Outputs**: skims and assignment results consumed by the demand models on
+  the next feedback iteration; per-component logs under `<scenario>/quetzal/`.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Run hangs at the `quetzal` step | Heavy assignment on a small machine | Reduce iterations or use a smaller test network |
+| `python.exe not found` for Quetzal | `ORCA_QUETZAL_ENV` not set | Activate via `run_python_cmds.bat` so the env var is exported |
+| Skims look stale | `quetzal_starter` not run on the first iteration | Confirm `quetzal_starter` is in `model_steps` with `iterations: first` |
+
+::: {.callout-tip}
+**To expand:** add network-build conventions, transit data sources, and
+assignment-parameter tuning once the team's Quetzal workflow is settled.
+:::

@@ -1,0 +1,63 @@
+---
+title: "PopulationSim"
+---
+
+::: {.callout-note appearance="simple"}
+A **helper guide** — reference material for working with the PopulationSim
+component, not part of the linear Setup → Run walkthrough. Dip in as needed.
+:::
+
+## Overview
+
+**PopulationSim** generates the synthetic population that downstream demand
+models (ActivitySim) consume. It is one of the five ORCA components and runs
+in its own isolated Python environment.
+
+## Where it fits in ORCA
+
+| Aspect | Value |
+|---|---|
+| Python environment | `populationsim` — Python 3.10, managed by `uv` (`.py_envs\populationsim`) |
+| Scenario folder | `<scenario>/popsim/` — configs + input data |
+| Config block | `sub_components.populationsim` in `<scenario>/orca_model_config.yaml` |
+
+Because PopulationSim feeds ActivitySim, it typically runs **early** (often
+only on the first iteration). Whether it executes is controlled by its
+`iterations:` key in the scenario config — see [Running the Model](../chapters/02-run-model.qmd)
+for the `all` / `first` / `last` / `[1,3]` semantics shared by all components.
+
+## Running just PopulationSim
+
+To iterate on population synthesis without running the full model, trim
+`model_steps` in `<scenario>/orca_model_config.yaml` to the population step
+only, then run as usual:
+
+```bat
+python -m tlpytools.orca --action run_model --scenario db_example --mode local_testing
+```
+
+::: {.callout-warning}
+Edit the **scenario** config (`<scenario>/orca_model_config.yaml`), never the
+template (`src/orca/orca_model_config_default.yaml`). The template only
+applies the next time you `init_model` a fresh scenario.
+:::
+
+## Inputs and outputs
+
+- **Inputs** live under `<scenario>/popsim/` (controls, seed tables, geographic
+  crosswalks).
+- **Outputs** land in the component's output directory and are picked up by
+  ActivitySim as its base population.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `ImportError` when the popsim step runs | Wrong/!built environment | Re-run `run_python_cmds.bat`; confirm `.py_envs\populationsim` built |
+| Step skipped unexpectedly | `iterations:` excludes the current iteration | Check `sub_components.populationsim.iterations` in the scenario config |
+
+::: {.callout-tip}
+**To expand:** add component-specific input-prep steps, control-table
+expectations, and validation/QA checks once the team's PopulationSim
+conventions are settled.
+:::
