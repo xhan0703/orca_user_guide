@@ -5,6 +5,8 @@ covering installation and local runs of TransLink's regional activity-based
 modeling workflow. The rendered guide is published to GitHub Pages on every
 push to `main`.
 
+📖 **Read the guide:** <https://translinkforecasting.github.io/orca_user_guide/>
+
 ## Repository layout
 
 ```
@@ -59,13 +61,12 @@ Writes the static site to `_book/` (git-ignored).
 
 ## Publishing
 
+**Live at <https://translinkforecasting.github.io/orca_user_guide/>**
+
 `.github/workflows/publish.yml` renders the book and deploys it via GitHub
-Pages. **One-time setup after creating the GitHub remote:**
+Pages on every push to `main` — no manual step needed. Pages is configured
+with **Source = GitHub Actions** (set once under **Settings → Pages**).
 
-1. Push this repo to GitHub.
-2. Go to **Settings → Pages** and set **Source = GitHub Actions**.
-3. *(Optional)* Uncomment the `repo-url` / `repo-actions` block in
-   `_quarto.yml` and point it at the repo URL to enable the "Edit this page"
-   and "Report an issue" margin links.
-
-Every later push to `main` rebuilds and redeploys automatically.
+*Optional:* uncomment the `repo-url` / `repo-actions` block in `_quarto.yml`
+and point it at the repo URL to enable the "Edit this page" and "Report an
+issue" margin links on each page.
