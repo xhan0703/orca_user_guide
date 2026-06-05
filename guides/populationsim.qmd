@@ -60,47 +60,53 @@ applies the next time you `init_model` a fresh scenario.
 ## Examples
 ### Age Cohort Analysis
 
-Study Target: Restrucutre the Population Struture (age distributuion) in synthetic population and simulate the mode share shift
+**Study Target**: Restructure the synthetic population age distribution and evaluate mode share shifts.
 
-1. Change the Landuse file.
-The input file for PopulationSim is the landuse file, which contains the number of households and population by TAZ. By changing the landuse file, we can change the population structure. For example, in this case, we keeps the control total same but shift the age distribution by changing the population structure in the landuse file. We can increase the number of households and population in the TAZs with more **Older people** and decrease the number of households and population in the TAZs with more **Younger people**.
+1. Change the land use file.<br>
+  The PopulationSim input file is the land use file, which contains household and population totals by TAZ. Updates to this file modify the synthetic population structure.<br>
+  In this example, control totals remain unchanged while age distribution is shifted. Increase household and population totals in TAZs with more **older people** and decrease totals in TAZs with more **younger people**.
 
-Landuse file saved in `<databank>/inputs/landuse/taz1709_demographic_<horizon>.csv`
+  Landuse file saved in `<databank>/inputs/landuse/taz1709_demographic_<horizon>.csv`
 
-![Landuse input example](../images/landuse_input.JPG)
+  ![Landuse input example](../images/landuse_input.JPG){fig-align="center".cap-center}
 
 
-2. Run PopulationSim with the new landuse file.
-After changing the landuse file, we can run PopulationSim to generate the synthetic population with the new age distribution. To run the PopulationSim, we can use the following steps:
-step 1: Activate the PopulationSim environment:
-in cmd line, navigate to the ORCA root directory and run the following command:
-```bat
-run_python_cmds.bat
-```
-It will let you chose the enviroment from a list, select `PopulationSim` and hit enter. It will activate the PopulationSim environment.
+2. Run PopulationSim with the updated land use file.<br>
+  After the land use file is updated, run PopulationSim to generate a synthetic population with the revised age distribution. To run PopulationSim, follow these steps:
+  <br>**Step 1**: Activate the PopulationSim environment.
+  In a command prompt, navigate to the ORCA root directory and run:
+  
+  ```bat
+  run_python_cmds.bat
+  ```
+  When the environment list appears, select `PopulationSim` and press Enter.
 
-![Activate PopulationSim environment](../images/activate_environment.JPG)
+  ![Activate PopulationSim environment](../images/activate_environment.JPG){fig-align="center".cap-center}
 
-step 2: Run the PopulationSim with the new landuse file:
-Navigate to the `<databank>/popsim/` directory, and run the following command:
-```bat
-python run_synpop.py --mode synpop_update --base-year 2023 --seed-year 2023 --seed-data previous_synpop
-```
-- `--mode synpop_update` tells the script to update the synthetic population based on the new landuse file.
-- `--base-year 2023` specifies the base year for the population synthesis.
-- `--seed-year 2023` specifies the seed year for the population synthesis.
-- `--seed-data previous_synpop` specifies the seed data to use for the population synthesis. In this case, we are using the previous synthetic population as the seed data.
-After running the above command, PopulationSim will generate a new synthetic population with the updated age distribution based on the new landuse file.
+  **Step 2**: Run PopulationSim with the updated land use file.
+  Navigate to `<databank>/popsim/` and run:
+  
+  ```bat 
+  python run_synpop.py --mode synpop_update --base-year 2023 --seed-year 2023 --seed-data previous_synpop
+  ```
+  Here's what each argument does:
+  <br>`--mode synpop_update`: updates the synthetic population using the modified land use file.
+  <br> `--base-year 2023`: sets the base year for population synthesis.
+  <br> `--seed-year 2023`: sets the seed year for population synthesis.
+  <br> `--seed-data previous_synpop`: uses the previous synthetic population as seed data.
+  <br>This command generates a new synthetic population with the revised age distribution.
 
-3. Run ORCA with the new synthetic population.
-After generating the new synthetic population with PopulationSim, we can run the full ORCA model to simulate the mode share shift based on the new population structure.
-The new synthetic population file generated in `<databank>/popsim/` will be used as input for the ORCA model.
+3. Run ORCA with the new synthetic population.<br>
+  After PopulationSim completes, run the full **ORCA** model to evaluate mode share shifts under the updated population structure.<br>
+  Use the new synthetic population file in `<databank>/popsim/` as ORCA input. Replace the previous synthetic population file in the ORCA input directory, then run ORCA as usual.
+  
+  ![Synthetic population input file](../images/synthetic_pop_input.JPG){fig-align="center".cap-center}
 
-4. Analyze the results.
-After running the ORCA model with the new synthetic population, we can analyze the results. The results are saved in several parquet files.
-trips file: `<databank>/activitysim/outputs/final_trip.parquet`
-persons file: `<databank>/activitysim/outputs/final_person.parquet`
-households file: `<databank>/activitysim/outputs/final_household.parquet`
+4. Analyze the results.<br>
+ Results are saved in several parquet files:
+ - trips file: `<databank>/activitysim/outputs/final_trip.parquet`
+ - persons file: `<databank>/activitysim/outputs/final_person.parquet`
+ - households file: `<databank>/activitysim/outputs/final_household.parquet`
 
 For network analysis, results saved in:
 `<databank>/quetzal/scenarios/<scenario_name>/<peak_period>/`
