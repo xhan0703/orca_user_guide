@@ -71,34 +71,34 @@ applies the next time you `init_model` a fresh scenario.
   ![Landuse input example](../images/landuse_input.JPG){fig-align="center".cap-center}
 
 
-2. Run PopulationSim with the updated land use file.<br>
+2. Run PopulationSim with the updated land use file.
   After the land use file is updated, run PopulationSim to generate a synthetic population with the revised age distribution. To run PopulationSim, follow these steps:
-  <br>**Step 1**: Activate the PopulationSim environment.
-  In a command prompt, navigate to the ORCA root directory and run:
-  
-  ```bat
-  run_python_cmds.bat
-  ```
-  When the environment list appears, select `PopulationSim` and press Enter.
 
-  ![Activate PopulationSim environment](../images/activate_environment.JPG){fig-align="center".cap-center}
+  - **Step 1**: Run Orca Update Pop tool.
+    - In 'project root' directory, double-click `start_jupyter.bat`. It will open a jupyter notebook in browser.
+    - Open the notebook `orca_synpop_update.ipynb` in the `tools` folder.
 
-  **Step 2**: Run PopulationSim with the updated land use file.
-  Navigate to `<databank>/popsim/` and run:
-  
-  ```bat 
-  python run_synpop.py --mode synpop_update --base-year 2023 --seed-year 2023 --seed-data previous_synpop
-  ```
-  Here's what each argument does:
-  <br>`--mode synpop_update`: updates the synthetic population using the modified land use file.
-  <br> `--base-year 2023`: sets the base year for population synthesis.
-  <br> `--seed-year 2023`: sets the seed year for population synthesis.
-  <br> `--seed-data previous_synpop`: uses the previous synthetic population as seed data.
-  <br>This command generates a new synthetic population with the revised age distribution.
+    ![Orca Update Pop tool](../images/synpop_update_tool.JPG){fig-align="center".cap-center}
+
+  - **Step 2**: Prepare the new landuse input files.
+    - Run step 1 in the notebook to create a folder `{PROJECT_ROOT}/tools/orca_synpop_update/landuse/`.
+    - Copy the updated landuse file to the folder. This will be the new landuse control file for PopulationSim.
+
+    ![Updated landuse file path](../images/synpop_input_file.JPG){fig-align="center".cap-center}
+  - **Step 3**: Check the input files.
+    - Run step 2 in the notebook to check the input files. This will generate a summary of the input files and check for any errors or warnings.
+    - Ensure the Base demographics point to the correct landuse file in right folder.
+
+    ![Verified input files](../images/verify_inputs.JPG){fig-align="center".cap-center}
+  - **Step 4**: Run the synthetic population update tool.
+    - Run the rest of cells until the end. This will generate the updated synthetic population.
+    - After finishing, the new synthetic population will be saved in `{PROJECT_ROOT}/tools/orca_synpop_update/landuse/` folder as a zip package.
+
+    ![Updated synthetic population](../images/synpop_update_results.JPG){fig-align="center".cap-center}
 
 3. Run ORCA with the new synthetic population.<br>
   After PopulationSim completes, run the full **ORCA** model to evaluate mode share shifts under the updated population structure.<br>
-  Use the new synthetic population file in `<databank>/popsim/` as ORCA input. Replace the previous synthetic population file in the ORCA input directory, then run ORCA as usual.
+  Use the new synthetic population file to replace the previous synthetic population file in `<databank>/inputs/landuse/` as ORCA input. Then run ORCA as typical way.
   
   ![Synthetic population input file](../images/synthetic_pop_input.JPG){fig-align="center".cap-center}
 

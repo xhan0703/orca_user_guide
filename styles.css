@@ -1,0 +1,4 @@
+/* Center captions for figures that are already centered by Quarto (fig-align="center"). */
+.quarto-figure-center figcaption {
+  text-align: center;
+}
